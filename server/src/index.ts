@@ -7,47 +7,44 @@ import { z } from 'zod';
 
 // Import schemas
 import {
-  createProfileInputSchema,
-  updateProfileInputSchema,
+  createUserInputSchema,
   createAccountInputSchema,
   updateAccountInputSchema,
   createCategoryInputSchema,
   createTransactionInputSchema,
   updateTransactionInputSchema,
-  getTransactionsInputSchema,
+  getUserTransactionsInputSchema,
   createBudgetInputSchema,
-  getBudgetsInputSchema,
-  createRecurringRuleInputSchema,
-  createGoalInputSchema,
-  updateGoalInputSchema
+  updateBudgetInputSchema,
+  getUserBudgetStatusInputSchema,
+  createRecurringTransactionInputSchema,
+  createFinancialGoalInputSchema,
+  updateFinancialGoalInputSchema,
+  getFinancialSummaryInputSchema
 } from './schema';
 
 // Import handlers
-import { createProfile } from './handlers/create_profile';
-import { getProfile } from './handlers/get_profile';
-import { updateProfile } from './handlers/update_profile';
+import { createUser } from './handlers/create_user';
 import { createAccount } from './handlers/create_account';
-import { getAccounts } from './handlers/get_accounts';
+import { getUserAccounts } from './handlers/get_user_accounts';
 import { updateAccount } from './handlers/update_account';
-import { deleteAccount } from './handlers/delete_account';
 import { createCategory } from './handlers/create_category';
-import { getCategories } from './handlers/get_categories';
+import { getUserCategories } from './handlers/get_user_categories';
 import { createTransaction } from './handlers/create_transaction';
-import { getTransactions } from './handlers/get_transactions';
+import { getUserTransactions } from './handlers/get_user_transactions';
 import { updateTransaction } from './handlers/update_transaction';
 import { deleteTransaction } from './handlers/delete_transaction';
 import { createBudget } from './handlers/create_budget';
-import { getBudgets } from './handlers/get_budgets';
-import { createRecurringRule } from './handlers/create_recurring_rule';
-import { getRecurringRules } from './handlers/get_recurring_rules';
-import { createGoal } from './handlers/create_goal';
-import { getGoals } from './handlers/get_goals';
-import { updateGoal } from './handlers/update_goal';
-import { getFinancialSummary } from './handlers/get_financial_summary';
-import { importTransactions, type ImportTransactionRow } from './handlers/import_transactions';
-import { exportTransactions, type ExportOptions } from './handlers/export_transactions';
+import { getUserBudgets } from './handlers/get_user_budgets';
+import { getBudgetStatus } from './handlers/get_budget_status';
+import { updateBudget } from './handlers/update_budget';
+import { createRecurringTransaction } from './handlers/create_recurring_transaction';
+import { getUserRecurringTransactions } from './handlers/get_user_recurring_transactions';
 import { processRecurringTransactions } from './handlers/process_recurring_transactions';
-import { generateAIInsights } from './handlers/generate_ai_insights';
+import { createFinancialGoal } from './handlers/create_financial_goal';
+import { getUserFinancialGoals } from './handlers/get_user_financial_goals';
+import { updateFinancialGoal } from './handlers/update_financial_goal';
+import { getFinancialSummary } from './handlers/get_financial_summary';
 
 const t = initTRPC.create({
   transformer: superjson,
@@ -56,136 +53,102 @@ const t = initTRPC.create({
 const publicProcedure = t.procedure;
 const router = t.router;
 
-// Mock user context - in real implementation, this would come from JWT/session
-const mockUserId = '550e8400-e29b-41d4-a716-446655440000';
-
 const appRouter = router({
+  // Health check
   healthcheck: publicProcedure.query(() => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   }),
 
-  // Profile routes
-  createProfile: publicProcedure
-    .input(createProfileInputSchema)
-    .mutation(({ input }) => createProfile(input)),
-  
-  getProfile: publicProcedure
-    .input(z.string().uuid())
-    .query(({ input }) => getProfile(input)),
-  
-  updateProfile: publicProcedure
-    .input(updateProfileInputSchema)
-    .mutation(({ input }) => updateProfile(input)),
+  // User management
+  createUser: publicProcedure
+    .input(createUserInputSchema)
+    .mutation(({ input }) => createUser(input)),
 
-  // Account routes
+  // Account management
   createAccount: publicProcedure
     .input(createAccountInputSchema)
-    .mutation(({ input }) => createAccount(input, mockUserId)),
-  
-  getAccounts: publicProcedure
-    .query(() => getAccounts(mockUserId)),
-  
+    .mutation(({ input }) => createAccount(input)),
+
+  getUserAccounts: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserAccounts(input.userId)),
+
   updateAccount: publicProcedure
     .input(updateAccountInputSchema)
-    .mutation(({ input }) => updateAccount(input, mockUserId)),
-  
-  deleteAccount: publicProcedure
-    .input(z.string().uuid())
-    .mutation(({ input }) => deleteAccount(input, mockUserId)),
+    .mutation(({ input }) => updateAccount(input)),
 
-  // Category routes
+  // Category management
   createCategory: publicProcedure
     .input(createCategoryInputSchema)
-    .mutation(({ input }) => createCategory(input, mockUserId)),
-  
-  getCategories: publicProcedure
-    .query(() => getCategories(mockUserId)),
+    .mutation(({ input }) => createCategory(input)),
 
-  // Transaction routes
+  getUserCategories: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserCategories(input.userId)),
+
+  // Transaction management
   createTransaction: publicProcedure
     .input(createTransactionInputSchema)
-    .mutation(({ input }) => createTransaction(input, mockUserId)),
-  
-  getTransactions: publicProcedure
-    .input(getTransactionsInputSchema)
-    .query(({ input }) => getTransactions(input, mockUserId)),
-  
+    .mutation(({ input }) => createTransaction(input)),
+
+  getUserTransactions: publicProcedure
+    .input(getUserTransactionsInputSchema)
+    .query(({ input }) => getUserTransactions(input)),
+
   updateTransaction: publicProcedure
     .input(updateTransactionInputSchema)
-    .mutation(({ input }) => updateTransaction(input, mockUserId)),
-  
-  deleteTransaction: publicProcedure
-    .input(z.string().uuid())
-    .mutation(({ input }) => deleteTransaction(input, mockUserId)),
+    .mutation(({ input }) => updateTransaction(input)),
 
-  // Budget routes
+  deleteTransaction: publicProcedure
+    .input(z.object({ transactionId: z.number() }))
+    .mutation(({ input }) => deleteTransaction(input.transactionId)),
+
+  // Budget management
   createBudget: publicProcedure
     .input(createBudgetInputSchema)
-    .mutation(({ input }) => createBudget(input, mockUserId)),
-  
-  getBudgets: publicProcedure
-    .input(getBudgetsInputSchema)
-    .query(({ input }) => getBudgets(input, mockUserId)),
+    .mutation(({ input }) => createBudget(input)),
 
-  // Recurring rule routes
-  createRecurringRule: publicProcedure
-    .input(createRecurringRuleInputSchema)
-    .mutation(({ input }) => createRecurringRule(input, mockUserId)),
-  
-  getRecurringRules: publicProcedure
-    .query(() => getRecurringRules(mockUserId)),
+  getUserBudgets: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserBudgets(input.userId)),
 
-  // Goal routes
-  createGoal: publicProcedure
-    .input(createGoalInputSchema)
-    .mutation(({ input }) => createGoal(input, mockUserId)),
-  
-  getGoals: publicProcedure
-    .query(() => getGoals(mockUserId)),
-  
-  updateGoal: publicProcedure
-    .input(updateGoalInputSchema)
-    .mutation(({ input }) => updateGoal(input, mockUserId)),
+  getBudgetStatus: publicProcedure
+    .input(getUserBudgetStatusInputSchema)
+    .query(({ input }) => getBudgetStatus(input)),
 
-  // Dashboard and reporting routes
-  getFinancialSummary: publicProcedure
-    .input(z.object({
-      startDate: z.coerce.date(),
-      endDate: z.coerce.date()
-    }))
-    .query(({ input }) => getFinancialSummary(mockUserId, input.startDate, input.endDate)),
+  updateBudget: publicProcedure
+    .input(updateBudgetInputSchema)
+    .mutation(({ input }) => updateBudget(input)),
 
-  // Import/Export routes
-  importTransactions: publicProcedure
-    .input(z.array(z.object({
-      date: z.string(),
-      amount: z.number(),
-      description: z.string(),
-      category: z.string().optional(),
-      account: z.string(),
-      type: z.enum(['income', 'expense']),
-      notes: z.string().optional()
-    })))
-    .mutation(({ input }) => importTransactions(input, mockUserId)),
-  
-  exportTransactions: publicProcedure
-    .input(z.object({
-      format: z.enum(['csv', 'excel']),
-      startDate: z.coerce.date().optional(),
-      endDate: z.coerce.date().optional(),
-      accountIds: z.array(z.string().uuid()).optional(),
-      categoryIds: z.array(z.string().uuid()).optional()
-    }))
-    .query(({ input }) => exportTransactions(input, mockUserId)),
+  // Recurring transactions
+  createRecurringTransaction: publicProcedure
+    .input(createRecurringTransactionInputSchema)
+    .mutation(({ input }) => createRecurringTransaction(input)),
 
-  // Background processing routes
+  getUserRecurringTransactions: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserRecurringTransactions(input.userId)),
+
   processRecurringTransactions: publicProcedure
-    .input(z.string().uuid().optional())
-    .mutation(({ input }) => processRecurringTransactions(input)),
+    .mutation(() => processRecurringTransactions()),
 
-  // AI insights route
-  generateAIInsights: publicProcedure
-    .query(() => generateAIInsights(mockUserId))
+  // Financial goals
+  createFinancialGoal: publicProcedure
+    .input(createFinancialGoalInputSchema)
+    .mutation(({ input }) => createFinancialGoal(input)),
+
+  getUserFinancialGoals: publicProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(({ input }) => getUserFinancialGoals(input.userId)),
+
+  updateFinancialGoal: publicProcedure
+    .input(updateFinancialGoalInputSchema)
+    .mutation(({ input }) => updateFinancialGoal(input)),
+
+  // Financial summary and reporting
+  getFinancialSummary: publicProcedure
+    .input(getFinancialSummaryInputSchema)
+    .query(({ input }) => getFinancialSummary(input)),
 });
 
 export type AppRouter = typeof appRouter;
@@ -194,10 +157,7 @@ async function start() {
   const port = process.env['SERVER_PORT'] || 2022;
   const server = createHTTPServer({
     middleware: (req, res, next) => {
-      cors({
-        origin: ['http://localhost:3000', 'http://localhost:5173'], // Allow common dev ports
-        credentials: true
-      })(req, res, next);
+      cors()(req, res, next);
     },
     router: appRouter,
     createContext() {
@@ -205,18 +165,7 @@ async function start() {
     },
   });
   server.listen(port);
-  console.log(`Personal Finance PWA TRPC server listening at port: ${port}`);
-  console.log('Available routes:');
-  console.log('- Profile management (create, get, update)');
-  console.log('- Account/wallet management (CRUD)');
-  console.log('- Category management');
-  console.log('- Transaction management (CRUD with filtering)');
-  console.log('- Budget tracking');
-  console.log('- Recurring transactions');
-  console.log('- Savings goals');
-  console.log('- Financial dashboard and reporting');
-  console.log('- Data import/export');
-  console.log('- AI insights generation');
+  console.log(`Personal Finance Management TRPC server listening at port: ${port}`);
 }
 
 start();

@@ -1,21 +1,16 @@
 import { type UpdateAccountInput, type Account } from '../schema';
 
-export async function updateAccount(input: UpdateAccountInput, userId: string): Promise<Account> {
+export async function updateAccount(input: UpdateAccountInput): Promise<Account> {
     // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is updating an existing account.
-    // Should verify the account belongs to the authenticated user.
-    return Promise.resolve({
+    // The goal of this handler is updating an existing account with new information.
+    return {
         id: input.id,
-        user_id: userId,
-        name: input.name || 'Account',
-        type: input.type || 'cash',
+        user_id: 1, // Placeholder
+        name: input.name || 'Updated Account',
+        type: 'checking', // Placeholder
         balance: input.balance || 0,
-        currency: input.currency || 'IDR',
-        color: input.color || null,
-        icon: input.icon || null,
-        is_active: input.is_active !== undefined ? input.is_active : true,
+        description: input.description || null,
         created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null
-    });
+        updated_at: new Date()
+    } as Account;
 }

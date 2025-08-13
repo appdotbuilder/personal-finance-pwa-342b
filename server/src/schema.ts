@@ -1,330 +1,279 @@
 import { z } from 'zod';
 
-// Enum schemas
-export const accountTypeSchema = z.enum(['cash', 'bank', 'credit_card', 'investment', 'loan']);
-export type AccountType = z.infer<typeof accountTypeSchema>;
-
-export const transactionTypeSchema = z.enum(['income', 'expense', 'transfer']);
-export type TransactionType = z.infer<typeof transactionTypeSchema>;
-
-export const categoryTypeSchema = z.enum(['income', 'expense']);
-export type CategoryType = z.infer<typeof categoryTypeSchema>;
-
-export const frequencySchema = z.enum(['daily', 'weekly', 'monthly', 'yearly']);
-export type Frequency = z.infer<typeof frequencySchema>;
-
-export const goalStatusSchema = z.enum(['active', 'completed', 'paused']);
-export type GoalStatus = z.infer<typeof goalStatusSchema>;
-
-// Profile schema
-export const profileSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  display_name: z.string(),
-  avatar_url: z.string().nullable(),
-  currency: z.string().default('IDR'),
-  locale: z.string().default('id-ID'),
-  timezone: z.string().default('Asia/Jakarta'),
+// User schema
+export const userSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string().email(),
   created_at: z.coerce.date(),
   updated_at: z.coerce.date()
 });
 
-export type Profile = z.infer<typeof profileSchema>;
+export type User = z.infer<typeof userSchema>;
 
 // Account schema
+export const accountTypeEnum = z.enum(['checking', 'savings', 'credit_card', 'investment', 'cash', 'loan']);
+
 export const accountSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  id: z.number(),
+  user_id: z.number(),
   name: z.string(),
-  type: accountTypeSchema,
+  type: accountTypeEnum,
   balance: z.number(),
-  currency: z.string().default('IDR'),
-  color: z.string().nullable(),
-  icon: z.string().nullable(),
-  is_active: z.boolean().default(true),
+  description: z.string().nullable(),
   created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  updated_at: z.coerce.date()
 });
 
 export type Account = z.infer<typeof accountSchema>;
 
 // Category schema
+export const categoryTypeEnum = z.enum(['income', 'expense']);
+
 export const categorySchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  id: z.number(),
+  user_id: z.number(),
   name: z.string(),
-  type: categoryTypeSchema,
+  type: categoryTypeEnum,
   color: z.string().nullable(),
-  icon: z.string().nullable(),
-  parent_id: z.string().uuid().nullable(),
-  is_active: z.boolean().default(true),
-  created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  parent_category_id: z.number().nullable(),
+  created_at: z.coerce.date()
 });
 
 export type Category = z.infer<typeof categorySchema>;
 
 // Transaction schema
 export const transactionSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  type: transactionTypeSchema,
+  id: z.number(),
+  user_id: z.number(),
+  account_id: z.number(),
+  category_id: z.number(),
   amount: z.number(),
   description: z.string(),
-  notes: z.string().nullable(),
-  account_id: z.string().uuid(),
-  to_account_id: z.string().uuid().nullable(),
-  category_id: z.string().uuid().nullable(),
-  receipt_url: z.string().nullable(),
-  location: z.string().nullable(),
-  recurring_rule_id: z.string().uuid().nullable(),
   transaction_date: z.coerce.date(),
   created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  updated_at: z.coerce.date()
 });
 
 export type Transaction = z.infer<typeof transactionSchema>;
 
 // Budget schema
+export const budgetPeriodEnum = z.enum(['weekly', 'monthly', 'yearly']);
+
 export const budgetSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  category_id: z.string().uuid(),
+  id: z.number(),
+  user_id: z.number(),
+  category_id: z.number(),
   amount: z.number(),
-  period_start: z.coerce.date(),
-  period_end: z.coerce.date(),
-  spent_amount: z.number().default(0),
-  is_active: z.boolean().default(true),
+  period: budgetPeriodEnum,
+  start_date: z.coerce.date(),
+  end_date: z.coerce.date().nullable(),
   created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  updated_at: z.coerce.date()
 });
 
 export type Budget = z.infer<typeof budgetSchema>;
 
-// Recurring rule schema
-export const recurringRuleSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  name: z.string(),
-  type: transactionTypeSchema,
+// Recurring transaction schema
+export const recurringFrequencyEnum = z.enum(['daily', 'weekly', 'monthly', 'yearly']);
+
+export const recurringTransactionSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
+  account_id: z.number(),
+  category_id: z.number(),
   amount: z.number(),
   description: z.string(),
-  account_id: z.string().uuid(),
-  to_account_id: z.string().uuid().nullable(),
-  category_id: z.string().uuid().nullable(),
-  frequency: frequencySchema,
-  start_date: z.coerce.date(),
+  frequency: recurringFrequencyEnum,
+  next_occurrence: z.coerce.date(),
   end_date: z.coerce.date().nullable(),
-  next_due_date: z.coerce.date(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean(),
   created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  updated_at: z.coerce.date()
 });
 
-export type RecurringRule = z.infer<typeof recurringRuleSchema>;
+export type RecurringTransaction = z.infer<typeof recurringTransactionSchema>;
 
-// Goal schema
-export const goalSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
+// Financial goal schema
+export const goalStatusEnum = z.enum(['active', 'completed', 'paused']);
+
+export const financialGoalSchema = z.object({
+  id: z.number(),
+  user_id: z.number(),
   name: z.string(),
-  description: z.string().nullable(),
   target_amount: z.number(),
-  current_amount: z.number().default(0),
+  current_amount: z.number(),
   target_date: z.coerce.date().nullable(),
-  status: goalStatusSchema.default('active'),
+  status: goalStatusEnum,
+  description: z.string().nullable(),
   created_at: z.coerce.date(),
-  updated_at: z.coerce.date(),
-  deleted_at: z.coerce.date().nullable()
+  updated_at: z.coerce.date()
 });
 
-export type Goal = z.infer<typeof goalSchema>;
-
-// Audit log schema
-export const auditLogSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  table_name: z.string(),
-  record_id: z.string().uuid(),
-  action: z.enum(['insert', 'update', 'delete']),
-  old_values: z.record(z.any()).nullable(),
-  new_values: z.record(z.any()).nullable(),
-  created_at: z.coerce.date()
-});
-
-export type AuditLog = z.infer<typeof auditLogSchema>;
+export type FinancialGoal = z.infer<typeof financialGoalSchema>;
 
 // Input schemas for creating entities
-export const createProfileInputSchema = z.object({
-  user_id: z.string().uuid(),
-  display_name: z.string(),
-  avatar_url: z.string().nullable().optional(),
-  currency: z.string().optional(),
-  locale: z.string().optional(),
-  timezone: z.string().optional()
+export const createUserInputSchema = z.object({
+  name: z.string(),
+  email: z.string().email()
 });
 
-export type CreateProfileInput = z.infer<typeof createProfileInputSchema>;
+export type CreateUserInput = z.infer<typeof createUserInputSchema>;
 
 export const createAccountInputSchema = z.object({
+  user_id: z.number(),
   name: z.string(),
-  type: accountTypeSchema,
+  type: accountTypeEnum,
   balance: z.number(),
-  currency: z.string().optional(),
-  color: z.string().nullable().optional(),
-  icon: z.string().nullable().optional()
+  description: z.string().nullable().optional()
 });
 
 export type CreateAccountInput = z.infer<typeof createAccountInputSchema>;
 
 export const createCategoryInputSchema = z.object({
+  user_id: z.number(),
   name: z.string(),
-  type: categoryTypeSchema,
+  type: categoryTypeEnum,
   color: z.string().nullable().optional(),
-  icon: z.string().nullable().optional(),
-  parent_id: z.string().uuid().nullable().optional()
+  parent_category_id: z.number().nullable().optional()
 });
 
 export type CreateCategoryInput = z.infer<typeof createCategoryInputSchema>;
 
 export const createTransactionInputSchema = z.object({
-  type: transactionTypeSchema,
-  amount: z.number().positive(),
+  user_id: z.number(),
+  account_id: z.number(),
+  category_id: z.number(),
+  amount: z.number(),
   description: z.string(),
-  notes: z.string().nullable().optional(),
-  account_id: z.string().uuid(),
-  to_account_id: z.string().uuid().nullable().optional(),
-  category_id: z.string().uuid().nullable().optional(),
-  receipt_url: z.string().nullable().optional(),
-  location: z.string().nullable().optional(),
-  recurring_rule_id: z.string().uuid().nullable().optional(),
-  transaction_date: z.coerce.date().optional()
+  transaction_date: z.coerce.date()
 });
 
 export type CreateTransactionInput = z.infer<typeof createTransactionInputSchema>;
 
 export const createBudgetInputSchema = z.object({
-  category_id: z.string().uuid(),
+  user_id: z.number(),
+  category_id: z.number(),
   amount: z.number().positive(),
-  period_start: z.coerce.date(),
-  period_end: z.coerce.date()
-});
-
-export type CreateBudgetInput = z.infer<typeof createBudgetInputSchema>;
-
-export const createRecurringRuleInputSchema = z.object({
-  name: z.string(),
-  type: transactionTypeSchema,
-  amount: z.number().positive(),
-  description: z.string(),
-  account_id: z.string().uuid(),
-  to_account_id: z.string().uuid().nullable().optional(),
-  category_id: z.string().uuid().nullable().optional(),
-  frequency: frequencySchema,
+  period: budgetPeriodEnum,
   start_date: z.coerce.date(),
   end_date: z.coerce.date().nullable().optional()
 });
 
-export type CreateRecurringRuleInput = z.infer<typeof createRecurringRuleInputSchema>;
+export type CreateBudgetInput = z.infer<typeof createBudgetInputSchema>;
 
-export const createGoalInputSchema = z.object({
+export const createRecurringTransactionInputSchema = z.object({
+  user_id: z.number(),
+  account_id: z.number(),
+  category_id: z.number(),
+  amount: z.number(),
+  description: z.string(),
+  frequency: recurringFrequencyEnum,
+  next_occurrence: z.coerce.date(),
+  end_date: z.coerce.date().nullable().optional()
+});
+
+export type CreateRecurringTransactionInput = z.infer<typeof createRecurringTransactionInputSchema>;
+
+export const createFinancialGoalInputSchema = z.object({
+  user_id: z.number(),
   name: z.string(),
-  description: z.string().nullable().optional(),
   target_amount: z.number().positive(),
-  target_date: z.coerce.date().nullable().optional()
+  target_date: z.coerce.date().nullable().optional(),
+  description: z.string().nullable().optional()
 });
 
-export type CreateGoalInput = z.infer<typeof createGoalInputSchema>;
+export type CreateFinancialGoalInput = z.infer<typeof createFinancialGoalInputSchema>;
 
-// Update schemas
-export const updateProfileInputSchema = z.object({
-  id: z.string().uuid(),
-  display_name: z.string().optional(),
-  avatar_url: z.string().nullable().optional(),
-  currency: z.string().optional(),
-  locale: z.string().optional(),
-  timezone: z.string().optional()
-});
-
-export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
-
+// Update input schemas
 export const updateAccountInputSchema = z.object({
-  id: z.string().uuid(),
+  id: z.number(),
   name: z.string().optional(),
-  type: accountTypeSchema.optional(),
   balance: z.number().optional(),
-  currency: z.string().optional(),
-  color: z.string().nullable().optional(),
-  icon: z.string().nullable().optional(),
-  is_active: z.boolean().optional()
+  description: z.string().nullable().optional()
 });
 
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 
 export const updateTransactionInputSchema = z.object({
-  id: z.string().uuid(),
-  type: transactionTypeSchema.optional(),
-  amount: z.number().positive().optional(),
+  id: z.number(),
+  account_id: z.number().optional(),
+  category_id: z.number().optional(),
+  amount: z.number().optional(),
   description: z.string().optional(),
-  notes: z.string().nullable().optional(),
-  account_id: z.string().uuid().optional(),
-  to_account_id: z.string().uuid().nullable().optional(),
-  category_id: z.string().uuid().nullable().optional(),
-  receipt_url: z.string().nullable().optional(),
-  location: z.string().nullable().optional(),
   transaction_date: z.coerce.date().optional()
 });
 
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInputSchema>;
 
-export const updateGoalInputSchema = z.object({
-  id: z.string().uuid(),
+export const updateBudgetInputSchema = z.object({
+  id: z.number(),
+  amount: z.number().positive().optional(),
+  period: budgetPeriodEnum.optional(),
+  start_date: z.coerce.date().optional(),
+  end_date: z.coerce.date().nullable().optional()
+});
+
+export type UpdateBudgetInput = z.infer<typeof updateBudgetInputSchema>;
+
+export const updateFinancialGoalInputSchema = z.object({
+  id: z.number(),
   name: z.string().optional(),
-  description: z.string().nullable().optional(),
   target_amount: z.number().positive().optional(),
   current_amount: z.number().nonnegative().optional(),
   target_date: z.coerce.date().nullable().optional(),
-  status: goalStatusSchema.optional()
+  status: goalStatusEnum.optional(),
+  description: z.string().nullable().optional()
 });
 
-export type UpdateGoalInput = z.infer<typeof updateGoalInputSchema>;
+export type UpdateFinancialGoalInput = z.infer<typeof updateFinancialGoalInputSchema>;
 
-// Query parameter schemas
-export const getTransactionsInputSchema = z.object({
-  account_id: z.string().uuid().optional(),
-  category_id: z.string().uuid().optional(),
-  type: transactionTypeSchema.optional(),
+// Query input schemas
+export const getUserTransactionsInputSchema = z.object({
+  user_id: z.number(),
+  account_id: z.number().optional(),
+  category_id: z.number().optional(),
   start_date: z.coerce.date().optional(),
   end_date: z.coerce.date().optional(),
   limit: z.number().int().positive().optional(),
   offset: z.number().int().nonnegative().optional()
 });
 
-export type GetTransactionsInput = z.infer<typeof getTransactionsInputSchema>;
+export type GetUserTransactionsInput = z.infer<typeof getUserTransactionsInputSchema>;
 
-export const getBudgetsInputSchema = z.object({
-  period_start: z.coerce.date().optional(),
-  period_end: z.coerce.date().optional(),
-  is_active: z.boolean().optional()
+export const getUserBudgetStatusInputSchema = z.object({
+  user_id: z.number(),
+  period: budgetPeriodEnum.optional(),
+  category_id: z.number().optional()
 });
 
-export type GetBudgetsInput = z.infer<typeof getBudgetsInputSchema>;
+export type GetUserBudgetStatusInput = z.infer<typeof getUserBudgetStatusInputSchema>;
 
-// Dashboard/report schemas
+export const getFinancialSummaryInputSchema = z.object({
+  user_id: z.number(),
+  start_date: z.coerce.date().optional(),
+  end_date: z.coerce.date().optional()
+});
+
+export type GetFinancialSummaryInput = z.infer<typeof getFinancialSummaryInputSchema>;
+
+// Response schemas for complex queries
+export const budgetStatusSchema = z.object({
+  budget: budgetSchema,
+  spent_amount: z.number(),
+  remaining_amount: z.number(),
+  percentage_used: z.number()
+});
+
+export type BudgetStatus = z.infer<typeof budgetStatusSchema>;
+
 export const financialSummarySchema = z.object({
   total_income: z.number(),
   total_expenses: z.number(),
   net_income: z.number(),
-  total_accounts: z.number().int(),
-  active_budgets: z.number().int(),
-  active_goals: z.number().int(),
-  period_start: z.coerce.date(),
-  period_end: z.coerce.date()
+  account_balances: z.record(z.string(), z.number()),
+  budget_status: z.array(budgetStatusSchema),
+  goal_progress: z.array(financialGoalSchema)
 });
 
 export type FinancialSummary = z.infer<typeof financialSummarySchema>;

@@ -1,7 +1,5 @@
-export async function deleteTransaction(transactionId: string, userId: string): Promise<void> {
+export async function deleteTransaction(transactionId: number): Promise<{ success: boolean }> {
     // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is soft-deleting a transaction.
-    // Should verify transaction ownership and reverse account balance changes.
-    // Should also update budget spent amounts and goal progress.
-    return Promise.resolve();
+    // The goal of this handler is deleting a transaction and adjusting account balances accordingly.
+    return { success: true };
 }

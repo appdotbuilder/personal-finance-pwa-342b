@@ -1,20 +1,17 @@
 import { type CreateBudgetInput, type Budget } from '../schema';
 
-export async function createBudget(input: CreateBudgetInput, userId: string): Promise<Budget> {
+export async function createBudget(input: CreateBudgetInput): Promise<Budget> {
     // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new budget for a category.
-    // Should validate category ownership and calculate initial spent amount.
-    return Promise.resolve({
-        id: '00000000-0000-0000-0000-000000000000', // Placeholder UUID
-        user_id: userId,
+    // The goal of this handler is creating a new budget for a specific category and time period.
+    return {
+        id: 1,
+        user_id: input.user_id,
         category_id: input.category_id,
         amount: input.amount,
-        period_start: input.period_start,
-        period_end: input.period_end,
-        spent_amount: 0,
-        is_active: true,
+        period: input.period,
+        start_date: input.start_date,
+        end_date: input.end_date || null,
         created_at: new Date(),
-        updated_at: new Date(),
-        deleted_at: null
-    });
+        updated_at: new Date()
+    } as Budget;
 }
